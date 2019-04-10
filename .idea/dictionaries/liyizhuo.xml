@@ -3,6 +3,7 @@
     <words>
       <w>bboxs</w>
       <w>celeba</w>
+      <w>filenames</w>
     </words>
   </dictionary>
 </component>

@@ -2,6 +2,7 @@ import os
 import time
 
 import numpy as np
+import cv2
 
 from utils import util
 
@@ -13,18 +14,62 @@ class CelebADataset(object):
     def __init__(self, config=None):
         start = time.time()
         self.config = config
+        self.batch_size = config.getint('batch_size')
+        self.img_size = config.getint('image_size', 64)
         assert os.path.exists(config['data_dir']), 'data dir {} does not exist'.format(config['data_dir'])
 
+        # read data
         self.pose_calculator = util.PoseCalculator()
         self.filenames, self.bboxs, self.poses, self.poses_flip = self._parse_dataset()
 
+        self.samples_num = len(self.filenames)
+        self.index_seq = np.arange(0, self.samples_num)
+        self.current_index = 0
+        np.random.shuffle(self.index_seq)
+
         print('Time to build dataset: {:.2f}s'.format(time.time() - start))
+
+    def generate_batch(self):
+        # Not enough samples left, shuffle the index and recount
+        if self.current_index + self.batch_size >= self.samples_num:
+            self.current_index = 0
+            np.random.shuffle(self.index_seq)
+
+        batch_index = self.index_seq[self.current_index:(self.current_index + self.batch_size)]
+        self.current_index = self.current_index + self.batch_size
+
+        batch = np.zeros((self.batch_size, 3, self.img_size, self.img_size))
+        poses = np.zeros((self.batch_size, 3))
+
+        for i in range(self.batch_size):
+            img_path = os.path.join(self.config['data_dir'], self.filenames[batch_index[i]])
+            img = cv2.imread(img_path)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = img[self.bboxs[1]:self.bboxs[3], self.bboxs[0]:self.bboxs[2], :]
+            poses[i] = self.poses[batch_index[i]]
+
+            # Flip
+            if self.config.getboolean('flip', True) and np.random.rand() > 0.5:
+                img = np.flip(img, 1)
+                poses[i] = self.poses_flip[batch_index[i]]
+
+            # Resize
+            img = cv2.resize(img, (self.img_size, self.img_size))
+            # Convert from (H, W, C) to (C, H, W)
+            img = np.transpose(img, (2, 0, 1))
+            # Scale to [-1, 1]
+            img = (img / 255.0 * 2) - 1.0
+            batch[i] = img
+
+        return batch, poses
 
     def _parse_dataset(self):
         """
         :return:
+            filenames: list of filenames
             bboxs: Bounding box of shape (N, 4), (x_min, y_min, x_max, y_max)
             poses: Poses of shape (N, 3), (roll, pitch, yaw)
+            poses_flip: Flipped Poses of shape (N, 3), (roll, pitch, yaw)
         """
         # Read filenames and bboxs
         bbox_file = os.path.join(self.config['data_dir'], 'Anno', 'list_bbox_celeba.txt')
