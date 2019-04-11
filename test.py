@@ -241,7 +241,9 @@ def test_algorithm():
 
 
 if __name__ == '__main__':
-    config = {'data_dir': '/home/liyizhuo/Desktop/dataset/CelebA'}
+    config = {'data_dir': '/home/liyizhuo/Desktop/dataset/CelebA',
+              'batch_size': 32,
+              'img_size': 64}
     dataset = CelebADataset(config)
     # test_algorithm()
     print(dataset.poses * 90)
