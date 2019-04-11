@@ -1,7 +1,7 @@
 # https://github.com/dougsouza/face-frontalization/blob/master/camera_calibration.py
 
-__author__ = 'Douglas'
-
+import os
+import logging
 import numpy as np
 import cv2
 import scipy.io
@@ -61,3 +61,27 @@ class PoseCalculator(object):
         # return res_model3d, out_a
         return np.ascontiguousarray(res_model3d, dtype=np.float32), np.ascontiguousarray(out_a, dtype=np.float32)
 
+
+def create_logger(logger_name,
+                  log_format=None,
+                  log_level=logging.INFO,
+                  log_path=None):
+    logger = logging.getLogger(logger_name)
+    assert (len(logger.handlers) == 0)
+    logger.setLevel(log_level)
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(log_level)
+    if log_format is not None:
+        formatter = logging.Formatter(log_format, datefmt='%Y-%m-%d %H:%M:%S')
+        console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+    if log_path is not None:
+        os.stat(os.path.dirname(os.path.abspath(log_path)))
+        file_handler = logging.FileHandler(log_path)
+        file_handler.setLevel(log_level)
+        if log_format is not None:
+            formatter = logging.Formatter(log_format, datefmt='%Y-%m-%d %H:%M:%S')
+            file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+    return logger
