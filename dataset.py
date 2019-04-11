@@ -14,9 +14,9 @@ class CelebADataset(object):
     def __init__(self, config=None):
         start = time.time()
         self.config = config
-        self.batch_size = config.getint('batch_size')
-        self.img_size = config.getint('image_size', 64)
-        assert os.path.exists(config['data_dir']), 'data dir {} does not exist'.format(config['data_dir'])
+        self.batch_size = config.batch_size
+        self.img_size = config.image_size
+        assert os.path.exists(config.data_dir), 'data dir {} does not exist'.format(config.data_dir)
 
         # read data
         self.pose_calculator = util.PoseCalculator()
@@ -25,7 +25,7 @@ class CelebADataset(object):
         self.samples_num = len(self.filenames)
         self.index_seq = np.arange(0, self.samples_num)
         self.current_index = 0
-        # np.random.shuffle(self.index_seq)
+        np.random.shuffle(self.index_seq)
 
         print('Time to build dataset: {:.2f}s'.format(time.time() - start))
 
@@ -43,14 +43,14 @@ class CelebADataset(object):
 
         for i in range(self.batch_size):
             bbox = self.bboxs[batch_index[i]]
-            img_path = os.path.join(self.config['data_dir'], 'img_celeba', self.filenames[batch_index[i]])
+            img_path = os.path.join(self.config.data_dir, 'img_celeba', self.filenames[batch_index[i]])
             img = cv2.imread(img_path)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             img = img[bbox[1]:bbox[3], bbox[0]:bbox[2], :]
             poses[i] = self.poses[batch_index[i]]
 
             # Flip
-            if self.config.getboolean('flip', True) and np.random.rand() > 0.5:
+            if self.config.flip and np.random.rand() > 0.5:
                 img = np.flip(img, 1)
                 poses[i] = self.poses_flip[batch_index[i]]
 
@@ -73,7 +73,7 @@ class CelebADataset(object):
             poses_flip: Flipped Poses of shape (N, 3), (roll, pitch, yaw)
         """
         # Read filenames and bboxs
-        bbox_file = os.path.join(self.config['data_dir'], 'Anno', 'list_bbox_celeba.txt')
+        bbox_file = os.path.join(self.config.data_dir, 'Anno', 'list_bbox_celeba.txt')
         assert os.path.exists(bbox_file)
         bboxs = open(bbox_file).readlines()
         filenames = [x.split()[0] for x in bboxs[2:]]
@@ -100,7 +100,7 @@ class CelebADataset(object):
                                                               center[:, 1] + half_len)
 
         # Read landmark and compute pose
-        landmark_file = os.path.join(self.config['data_dir'], 'Anno', 'list_landmarks_align_celeba.txt')
+        landmark_file = os.path.join(self.config.data_dir, 'Anno', 'list_landmarks_align_celeba.txt')
         assert os.path.exists(landmark_file)
         landmarks = open(landmark_file).readlines()
         landmarks = np.array([[int(y) for y in x.split()[1:]] for x in landmarks[2:]], dtype=np.float)

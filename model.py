@@ -56,7 +56,7 @@ class Generator(nn.Module):
 
 
 class Discriminator(nn.Module):
-    def __init__(self, config):
+    def __init__(self):
         super(Discriminator, self).__init__()
         # Input shape: (N, 6, 64, 64)
         self.encoder = nn.Sequential(
