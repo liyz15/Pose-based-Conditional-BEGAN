@@ -80,6 +80,16 @@ class CelebADataset(object):
         bboxs = [[int(y) for y in x.split()[1:]] for x in bboxs[2:]]
         bboxs = np.array(bboxs)
 
+        illegal_index = np.where((bboxs[:, 2] <= 0) | (bboxs[:, 3] <= 0))
+        print('Illegal image: {}'.format(illegal_index))
+
+        illegal_index = [x[0] for x in illegal_index]
+
+        for ind in illegal_index:
+            del filenames[ind]
+
+        bboxs = np.delete(bboxs, illegal_index, axis=0)
+
         wh = np.zeros((bboxs.shape[0], 2), dtype=np.int)
         wh[:, 0] = bboxs[:, 2]
         wh[:, 1] = bboxs[:, 3]
@@ -105,6 +115,7 @@ class CelebADataset(object):
         landmarks = open(landmark_file).readlines()
         landmarks = np.array([[int(y) for y in x.split()[1:]] for x in landmarks[2:]], dtype=np.float)
         landmarks = np.reshape(landmarks, (-1, 5, 2))
+        landmarks = np.delete(landmarks, illegal_index, axis=0)
         poses = [self.pose_calculator.compute(x) for x in landmarks]
         poses = np.squeeze(np.array(poses))
         poses /= 90.0
@@ -115,6 +126,7 @@ class CelebADataset(object):
         poses_flip = [self.pose_calculator.compute(x) for x in landmarks]
         poses_flip = np.squeeze(np.array(poses_flip))
         poses_flip /= 90.0
+
 
         # Check shape
         print('Number of images: {}'.format(len(filenames)))

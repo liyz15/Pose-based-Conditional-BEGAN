@@ -27,25 +27,25 @@ class Generator(nn.Module):
         # Reshape to: (128 x 8 x 8)
         self.main = nn.Sequential(
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),  # 128 x 8 x 8
-            nn.ELU(),
+            nn.ELU(True),
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),  # 128 x 8 x 8
-            nn.ELU(),
+            nn.ELU(True),
             Interpolate(scale_factor=(2, 2), mode='nearest'),
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),  # 128 x 16 x 16
-            nn.ELU(),
+            nn.ELU(True),
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),  # 128 x 16 x 16
-            nn.ELU(),
+            nn.ELU(True),
             Interpolate(scale_factor=(2, 2), mode='nearest'),
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),  # 128 x 32 x 32
-            nn.ELU(),
+            nn.ELU(True),
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),  # 128 x 32 x 32
-            nn.ELU(),
+            nn.ELU(True),
             Interpolate(scale_factor=(2, 2), mode='nearest'),
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),  # 128 x 64 x 64
-            nn.ELU(),
+            nn.ELU(True),
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),  # 128 x 64 x 64
-            nn.ELU(),
-            nn.Conv2d(128, output_channel, kernel_size=3, stride=1, padding=1)  # output_channel x 64 x 64
+            nn.ELU(True),
+            nn.Conv2d(128, output_channel, kernel_size=3, stride=1, padding=1),  # output_channel x 64 x 64
         )
 
     def forward(self, x):
@@ -61,25 +61,25 @@ class Discriminator(nn.Module):
         # Input shape: (N, 6, 64, 64)
         self.encoder = nn.Sequential(
             nn.Conv2d(6, 128, kernel_size=3, stride=1, padding=1),    # 128 x 64 x 64
-            nn.ELU(),
+            nn.ELU(True),
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),  # 128 x 64 x 64
-            nn.ELU(),
+            nn.ELU(True),
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),  # 128 x 64 x 64
-            nn.ELU(),
+            nn.ELU(True),
             nn.Conv2d(128, 128, kernel_size=3, stride=2, padding=1),  # 128 x 32 x 32
-            nn.ELU(),
+            nn.ELU(True),
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),  # 128 x 32 x 32
-            nn.ELU(),
+            nn.ELU(True),
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),  # 128 x 32 x 32
-            nn.ELU(),
+            nn.ELU(True),
             nn.Conv2d(128, 128, kernel_size=3, stride=2, padding=1),  # 128 x 16 x 16
-            nn.ELU(),
+            nn.ELU(True),
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),  # 128 x 16 x 16
-            nn.ELU(),
+            nn.ELU(True),
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),  # 128 x 16 x 16
-            nn.ELU(),
+            nn.ELU(True),
             nn.Conv2d(128, 128, kernel_size=3, stride=2, padding=1),  # 128 x 8 x 8
-            nn.ELU(),
+            nn.ELU(True),
         )
         # Reshape to: (N, 8192)
         self.FC1 = nn.Linear(8192, 128)
