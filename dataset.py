@@ -4,7 +4,7 @@ import time
 import numpy as np
 import cv2
 
-from utils import util
+from utils import PoseCalculator
 
 np.random.seed(233)
 
@@ -19,7 +19,7 @@ class CelebADataset(object):
         assert os.path.exists(config.data_dir), 'data dir {} does not exist'.format(config.data_dir)
 
         # read data
-        self.pose_calculator = util.PoseCalculator()
+        self.pose_calculator = PoseCalculator()
         self.filenames, self.bboxs, self.poses, self.poses_flip = self._parse_dataset()
 
         self.samples_num = len(self.filenames)
