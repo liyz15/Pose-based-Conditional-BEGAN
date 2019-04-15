@@ -5,13 +5,10 @@ import datetime
 import torch
 import torch.nn as nn
 import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
-matplotlib.use('Agg')
 
 from dataset import CelebADataset
 from model import Generator, Discriminator
-from utils import util
+from utils import create_logger, draw_debug_image
 
 parser = argparse.ArgumentParser()
 np.random.seed(233)
@@ -38,6 +35,13 @@ def weights_init(m):
 
 
 def get_target_pose():
+    """
+    Get a desired pose batch for debug.
+    :return:
+      target_pose:
+        A pose batch of shape (64, 3), the first 4 rows, are poses which yaw ranging from (-90, 90), the next 2 rows are
+        roll ranging from (-90, 90), the last 2 rows is for pitch. All poses are scaled to (-90, 90)
+    """
     target_pose = torch.zeros((64, 3))
     target_pose[0*8:1*8, 2] = torch.arange(-1.0, 1.1, 2.0 / 7)
     target_pose[1*8:2*8, 2] = torch.arange(-1.0, 1.1, 2.0 / 7)
@@ -52,29 +56,6 @@ def get_target_pose():
     return target_pose
 
 
-def draw_debug_image(batch, image_path):
-    batch = batch.detach().cpu().numpy()
-    batch = np.transpose(batch, (0, 2, 3, 1))
-    batch = (batch + 1.0) / 2.0 * 255.0
-    batch = np.round(batch).astype(np.int)
-    batch[batch < 0] = 0
-    batch[batch > 255] = 255
-    if batch.shape[3] > 3:
-        batch = batch[:, :, :, :3]
-
-    fig = plt.figure(figsize=(10, 10))
-    for i in range(8):
-        for j in range(batch.shape[0] // 8):
-            ax = plt.subplot(8, batch.shape[0] // 8, i * (batch.shape[0] // 8) + j + 1)
-            ax.set_aspect('equal')
-            plt.axis('off')
-            plt.subplots_adjust(wspace=0, hspace=0)
-            plt.imshow(batch[i * (batch.shape[0] // 8) + j])
-
-    fig.savefig(image_path)
-    plt.close(fig)
-
-
 def train(config):
     # ******************************************************************************************************************
     # * Build logger
@@ -83,7 +64,7 @@ def train(config):
     time_now = datetime.datetime.now().strftime('%m-%d-%H%M%S')
     if not os.path.exists('logs'):
         os.makedirs('logs')
-    logger = util.create_logger(
+    logger = create_logger(
         logger_name='main_logger',
         log_format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         log_path='logs/train_{}.log'.format(time_now)
@@ -137,6 +118,7 @@ def train(config):
     kt = 0.0
     step_num = (config.epoch * dataset.samples_num) // config.batch_size
     z = generate_z(config.z_dim, config.batch_size)
+    checkpoint_dir = 'checkpoints'
     if torch.cuda.is_available():
         z = z.cuda()
     for step in range(step_num):
@@ -205,7 +187,6 @@ def train(config):
                 log_list[k] = []
 
         if step % config.save_steps == 0:
-            checkpoint_dir = 'checkpoints'
             if not os.path.exists(checkpoint_dir):
                 os.makedirs(checkpoint_dir)
 
@@ -223,6 +204,8 @@ def train(config):
             D.train()
             G.train()
 
+    if not os.path.exists(checkpoint_dir):
+        os.makedirs(checkpoint_dir)
     torch.save(G.state_dict(), os.path.join(checkpoint_dir, 'checkpoint_final_G'))
     torch.save(D.state_dict(), os.path.join(checkpoint_dir, 'checkpoint_final_D'))
     D.eval()
@@ -237,7 +220,7 @@ def train(config):
 
 
 if __name__ == '__main__':
-    parser.add_argument('--data_dir', type=str, default='/home/liyizhuo/datasets/head_pose/CelebA', help='Data directory')
+    parser.add_argument('--data_dir', type=str, default='/home/liyizhuo/datasets/head_pose/CelebA')
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--image_size', type=int, default=64)
     parser.add_argument('--flip', type=bool, default=True)

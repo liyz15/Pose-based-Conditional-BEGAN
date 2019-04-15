@@ -1,3 +1,4 @@
+# The code for camera calibration is modified from
 # https://github.com/dougsouza/face-frontalization/blob/master/camera_calibration.py
 
 import os
@@ -5,6 +6,9 @@ import logging
 import numpy as np
 import cv2
 import scipy.io
+import matplotlib
+# matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 
 def estimate_camera(model3D, out_A, fidu_XY):
@@ -15,10 +19,6 @@ def estimate_camera(model3D, out_A, fidu_XY):
 
 
 def calib_camera(model_TD, out_A, fidu_XY):
-    # compute pose using reference 3D points + query 2D points
-    # print(model_TD.shape)
-    # print(fidu_XY.shape)
-    # ret, rvecs, tvec = cv2.solvePnP(model_TD, fidu_XY, out_A, distCoeffs=np.zeros((4,1)), flags=cv2.SOLVEPNP_ITERATIVE)
     ret, rvecs, tvec = cv2.solvePnP(model_TD, fidu_XY, out_A, None, None, None, False)
     rmat, jacobian = cv2.Rodrigues(rvecs, None)
 
@@ -54,12 +54,46 @@ class PoseCalculator(object):
 
         out_a = scipy.io.loadmat(model_path)['model_dlib']['outA'][0][0]
 
-        # 交换 1 2 列
+        # exchange column 1 and 2
         res_model3d[:, [1, 2]] = res_model3d[:, [2, 1]]
         res_model3d[:, 2] = -res_model3d[:, 2]
 
         # return res_model3d, out_a
         return np.ascontiguousarray(res_model3d, dtype=np.float32), np.ascontiguousarray(out_a, dtype=np.float32)
+
+
+def draw_debug_image(batch, image_path):
+    """
+    Draw and save images for a single batch.
+
+    :param batch:
+           Torch batch to draw, shape of (batch_size, 3 or 6, image_size, image_size), the batch_size should be
+           a multiple of 8, the batch should be scaled to [-1, 1], the pose in the last 3 channel will be
+           ignored.
+    :param image_path:
+           Path to save the drawn image.
+    """
+    batch = batch.detach().cpu().numpy()
+    batch = np.transpose(batch, (0, 2, 3, 1))
+    batch = (batch + 1.0) / 2.0 * 255.0
+    batch = np.round(batch).astype(np.int)
+    batch[batch < 0] = 0
+    batch[batch > 255] = 255
+    if batch.shape[3] > 3:
+        batch = batch[:, :, :, :3]
+    batch = batch.astype(np.uint8)
+
+    fig = plt.figure(figsize=(10, 10))
+    for i in range(8):
+        for j in range(batch.shape[0] // 8):
+            ax = plt.subplot(8, batch.shape[0] // 8, i * (batch.shape[0] // 8) + j + 1)
+            ax.set_aspect('equal')
+            plt.axis('off')
+            plt.subplots_adjust(wspace=0, hspace=0)
+            plt.imshow(batch[i * (batch.shape[0] // 8) + j])
+
+    fig.savefig(image_path)
+    plt.close(fig)
 
 
 def create_logger(logger_name,

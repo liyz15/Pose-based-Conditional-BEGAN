@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 class Interpolate(nn.Module):
     """
-    This exists only because nn.Upsample is deprecated and I need nn.Sequential
+    This exists only because nn.Upsample is deprecated and I want to use nn.Sequential
     """
     def __init__(self, size=None, scale_factor=None, mode='nearest'):
         super(Interpolate, self).__init__()
