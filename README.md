@@ -11,7 +11,7 @@ And common libraries such as numpy and matplotlib.
 
 ### Dataset
 
-Download [CelebA](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) dataset and uncompressed it to have a directory structure like below.
+Download **in the wild** [CelebA](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) dataset and uncompressed it to have a directory structure like below.
 ```
 data_dir
 ├── img_celeba
