@@ -7,11 +7,7 @@ import numpy as np
 import cv2
 import scipy.io
 import matplotlib
-<<<<<<< HEAD
 matplotlib.use('Agg')
-=======
-# matplotlib.use('Agg')
->>>>>>> 2d1a30b21bfb3cc60864096148d6935fdb3a3a52
 import matplotlib.pyplot as plt
 
 
