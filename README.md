@@ -47,6 +47,7 @@ For last 2 rows, the pitch varies evenly from -90 to 90.
 ## Note
 - I didn't try image size with 128, nor do I have enough resources to train one. It should be easy to modify the code to train a 128x128 model, just be careful with the draw debug image part, there may be some hard-code for image size 64.
 - In the paper I got, the learning rate was set to 8e-4, I failed to find converge with that learning rate. The results are given by a learning rate of 8e-5 and it worked like a charm.
+- In the paper I got, the beta2 for Adam was set to 0.99, and I modified it to 0.999. Have no idea which one is right.
 - In the paper, the auther flip the images and add it to dataset. While I just filp at random, and increase training epoch from 20 to 40.
 
 ## Author
