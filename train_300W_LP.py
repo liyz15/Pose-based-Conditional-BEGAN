@@ -236,8 +236,8 @@ def train(config):
 
 
 if __name__ == '__main__':
-    parser.add_argument('--data_dir', type=str, default='/home/liyizhuo/Desktop/300W_LP')
-    parser.add_argument('--filelist', type=str, default='/home/liyizhuo/Desktop/300W_LP/filelist.txt')
+    parser.add_argument('--data_dir', type=str, default='300W_LP')
+    parser.add_argument('--filelist', type=str, default='300W_LP/filelist.txt')
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--image_size', type=int, default=64)
     parser.add_argument('--flip', type=bool, default=True)

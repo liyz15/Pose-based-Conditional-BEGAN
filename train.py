@@ -220,7 +220,7 @@ def train(config):
 
 
 if __name__ == '__main__':
-    parser.add_argument('--data_dir', type=str, default='/home/liyizhuo/datasets/head_pose/CelebA')
+    parser.add_argument('--data_dir', type=str, default='CelebA')
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--image_size', type=int, default=64)
     parser.add_argument('--flip', type=bool, default=True)
