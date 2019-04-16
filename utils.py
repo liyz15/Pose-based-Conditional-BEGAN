@@ -119,3 +119,33 @@ def create_logger(logger_name,
             file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
     return logger
+
+
+def get_pose_params_from_mat(mat_path):
+    # This functions gets the pose parameters from the .mat
+    # Annotations that come with the Pose_300W_LP dataset.
+    mat = scipy.io.loadmat(mat_path)
+    # [pitch yaw roll tdx tdy tdz scale_factor]
+    pre_pose_params = mat['Pose_Para'][0]
+    # Get [pitch, yaw, roll, tdx, tdy]
+    pose_params = pre_pose_params[:5]
+    return pose_params
+
+
+def get_ypr_from_mat(mat_path):
+    # Get yaw, pitch, roll from .mat annotation.
+    # They are in radians
+    mat = scipy.io.loadmat(mat_path)
+    # [pitch yaw roll tdx tdy tdz scale_factor]
+    pre_pose_params = mat['Pose_Para'][0]
+    # Get [pitch, yaw, roll]
+    pose_params = pre_pose_params[:3]
+    return pose_params
+
+
+def get_pt2d_from_mat(mat_path):
+    # Get 2D landmarks
+    assert os.path.exists(mat_path), 'The mat file {} does not exist'.format(mat_path)
+    mat = scipy.io.loadmat(mat_path)
+    pt2d = mat['pt2d']
+    return pt2d
