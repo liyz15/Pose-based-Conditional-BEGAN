@@ -60,25 +60,28 @@ class Pose_300W_LP(Dataset):
         # And scale to [-1, 1].
         pitch = pose[0] / (np.pi / 2)
         yaw = pose[1] / (np.pi / 2)
-        roll = pose[2] / (np.pi / 2)
+        '''
+        # !!!!!! The roll in the dataset is opposite from mine
+        '''
+        roll = -pose[2] / (np.pi / 2)
         # Flip?
-        rnd = np.random.random_sample()
-        if rnd < 0.5:
-            yaw = -yaw
-            roll = -roll
-            img = img.transpose(Image.FLIP_LEFT_RIGHT)
+        # rnd = np.random.random_sample()
+        # if rnd < 0.5:
+        #     yaw = -yaw
+        #     roll = -roll
+        #     img = img.transpose(Image.FLIP_LEFT_RIGHTmg)
 
         # Blur?
         rnd = np.random.random_sample()
         if rnd < 0.05:
             img = img.filter(ImageFilter.BLUR)
 
-        cont_labels = [roll, pitch, yaw]
+        cont_labels = np.array([roll, pitch, yaw])
 
         if self.transform is not None:
             img = self.transform(img)
 
-        return img, cont_labels, self.X_train[index]
+        return img, cont_labels
 
     def __len__(self):
         # 122,450
