@@ -7,7 +7,7 @@ import torch.nn as nn
 from torchvision import transforms
 import numpy as np
 
-from dataset import Pose_300W_LP
+from dataset import Mixed
 from model import Generator, Discriminator
 from utils import create_logger, draw_debug_image
 
@@ -74,15 +74,16 @@ def train(config):
     fixed_z = generate_z(config.z_dim, config.batch_size)
     if torch.cuda.is_available():
         fixed_z = fixed_z.cuda()
-    transformations = transforms.Compose([transforms.Resize(config.image_size + 4),
+    transformations = transforms.Compose([transforms.Resize(config.image_size),
                                           transforms.RandomCrop(config.image_size),
                                           transforms.ToTensor(),
                                           transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
 
-    dataset = Pose_300W_LP(config.data_dir, config.filelist, transformations)
+    # dataset = Pose_300W_LP(config.data_dir, config.filelist, transformations)
+    dataset = Mixed(config.W_data_dir, config.filelist, transformations, config)
     dataloader = torch.utils.data.DataLoader(dataset=dataset,
                                              batch_size=config.batch_size,
-                                             shuffle=False,
+                                             shuffle=True,
                                              num_workers=4)
     fixed_real_batch, fixed_pose_batch = None, None
     fixed_real_batch_pose, fixed_z_pose = None, None
@@ -118,6 +119,8 @@ def train(config):
     for ep in range(config.epoch):
         for i, (real_batch, pose_batch) in enumerate(dataloader):
             step = ep * len(dataloader) + i
+            if real_batch.shape[0] != config.batch_size:
+                continue
             if torch.cuda.is_available():
                 real_batch = real_batch.float().cuda()
                 pose_batch = pose_batch.float().cuda()
@@ -236,7 +239,8 @@ def train(config):
 
 
 if __name__ == '__main__':
-    parser.add_argument('--data_dir', type=str, default='300W_LP')
+    parser.add_argument('--W_data_dir', type=str, default='300W_LP')
+    parser.add_argument('--data_dir', type=str, default='celeba')
     parser.add_argument('--filelist', type=str, default='300W_LP/filelist.txt')
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--image_size', type=int, default=64)

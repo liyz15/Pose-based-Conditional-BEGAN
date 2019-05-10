@@ -19,6 +19,51 @@ def get_list_from_filenames(file_path):
         lines = f.read().splitlines()
     return lines
 
+class Mixed(Dataset):
+    # Mixed dataset with 300W-LP dataset and celebA dataset
+    def __init__(self, data_dir, filename_path, transform=None, config=None):
+        self.dataset_300W_LP = Pose_300W_LP(data_dir, filename_path, transform=transform)
+        self.dataset_celeba = CelebADataset(config)
+        self.celeba_len = 202560
+        self.transform = transform
+        self.config = config
+
+        # build the celeba dataset
+        ind = np.argsort(np.linalg.norm(self.dataset_celeba.poses, axis=1))[:self.celeba_len]
+        ind = ind.tolist()
+        self.dataset_celeba.filenames = [self.dataset_celeba.filenames[x] for x in ind]
+        self.dataset_celeba.bboxs = self.dataset_celeba.bboxs[ind]
+        self.dataset_celeba.poses = self.dataset_celeba.poses[ind]
+        self.dataset_celeba.poses_flip = self.dataset_celeba.poses_flip[ind]
+
+
+    def __getitem__(self, index):
+        if index < len(self.dataset_300W_LP):
+            return self.dataset_300W_LP.__getitem__(index)
+        index -= len(self.dataset_300W_LP)
+        bbox = self.dataset_celeba.bboxs[index]
+        img_path = os.path.join(self.config.data_dir, 'img_celeba', self.dataset_celeba.filenames[index])
+        img = Image.open(img_path)
+        img = img.convert('RGB')
+        img = img.crop(bbox)
+
+        if np.random.random_sample() < 0.5:
+            pose = self.dataset_celeba.poses[index]
+        else:
+            pose = self.dataset_celeba.poses_flip[index]
+            img = img.transpose(Image.FLIP_LEFT_RIGHT)
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        return img, pose
+
+
+    def __len__(self):
+        return len(self.dataset_300W_LP) + self.celeba_len
+
+
+
 
 class Pose_300W_LP(Dataset):
     # Head pose from 300W-LP dataset
@@ -46,11 +91,10 @@ class Pose_300W_LP(Dataset):
         y_min = min(pt2d[1, :])
         x_max = max(pt2d[0, :])
         y_max = max(pt2d[1, :])
-
-        # k = 0.2 to 0.40
-        k = np.random.random_sample() * 0.2 + 0.2
+        # k = 0.1 to 0.20
+        k = np.random.random_sample() * 0.1 + 0.1
         x_min -= 0.6 * k * abs(x_max - x_min)
-        y_min -= 2 * k * abs(y_max - y_min)
+        y_min -= 0.6 * k * abs(y_max - y_min)
         x_max += 0.6 * k * abs(x_max - x_min)
         y_max += 0.6 * k * abs(y_max - y_min)
         img = img.crop((int(x_min), int(y_min), int(x_max), int(y_max)))
@@ -62,8 +106,9 @@ class Pose_300W_LP(Dataset):
         yaw = pose[1] / (np.pi / 2)
         '''
         # !!!!!! The roll in the dataset is opposite from mine
+        # FUCK! it's not.
         '''
-        roll = -pose[2] / (np.pi / 2)
+        roll = pose[2] / (np.pi / 2)
         # Flip?
         # rnd = np.random.random_sample()
         # if rnd < 0.5:
@@ -72,9 +117,9 @@ class Pose_300W_LP(Dataset):
         #     img = img.transpose(Image.FLIP_LEFT_RIGHTmg)
 
         # Blur?
-        rnd = np.random.random_sample()
-        if rnd < 0.05:
-            img = img.filter(ImageFilter.BLUR)
+        # rnd = np.random.random_sample()
+        # if rnd < 0.05:
+        #     img = img.filter(ImageFilter.BLUR)
 
         cont_labels = np.array([roll, pitch, yaw])
 
