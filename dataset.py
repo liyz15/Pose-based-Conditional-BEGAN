@@ -3,10 +3,43 @@ import time
 
 import numpy as np
 import cv2
+from torch.utils.data import Dataset
 
 from utils import PoseCalculator
 
 np.random.seed(233)
+
+
+class CelebA(Dataset):
+    """Dataset for CelebA, use PyTorch Dataset API"""
+    def __init__(self, config=None):
+        self.celeba = CelebADataset(config)
+        self.config = config
+
+    def __getitem__(self, index):
+        bbox = self.celeba.bboxs[index]
+        img_path = os.path.join(self.config.data_dir, 'img_celeba', self.celeba.filenames[index])
+        img = cv2.imread(img_path)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = img[bbox[1]:bbox[3], bbox[0]:bbox[2], :]
+        pose = self.celeba.poses[index]
+
+        # Flip
+        if self.config.flip and np.random.rand() > 0.5:
+            img = np.flip(img, 1)
+            pose = self.celeba.poses_flip[index]
+
+        # Resize
+        img = cv2.resize(img, (self.config.image_size, self.config.image_size))
+        # Convert from (H, W, C) to (C, H, W)
+        img = np.transpose(img, (2, 0, 1))
+        # Scale to [-1, 1]
+        img = (img / 255.0 * 2) - 1.0
+
+        return img, pose
+
+    def __len__(self):
+        return self.celeba.samples_num
 
 
 class CelebADataset(object):
